@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Decidir con IA — Gisella Salmón</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Sora:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --ink:#08090f;--ink2:#10141f;--ink3:#161c2c;
+  --fog:#8494b8;--mist:#c0ccdf;
+  --w:#fff;
+  --sky:#3d6bff;--sky2:#6b90ff;
+  --ember:#ff6630;--ember2:#ff8c55;
+  --jade:#17b87a;--jade2:#32d48a;
+  --rose:#e83350;
+  --gold:#e09c2a;--gold2:#f5bc4a;
+  --violet:#8b5cf6;--violet2:#a78bfa;
+  --serif:'Playfair Display',Georgia,serif;
+  --body:'Sora',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--body);background:var(--ink);color:var(--w);min-height:100vh;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:998;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity:.45;mix-blend-mode:overlay}
+.mesh{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 90% 55% at 8% 18%,rgba(61,107,255,.11) 0%,transparent 60%),
+    radial-gradient(ellipse 65% 45% at 92% 72%,rgba(255,102,48,.07) 0%,transparent 55%),
+    radial-gradient(ellipse 55% 65% at 50% 105%,rgba(23,184,122,.06) 0%,transparent 50%)}
+.shell{max-width:1160px;margin:0 auto;padding:0 26px 100px;position:relative;z-index:1}
+
+/* ── HEADER ── */
+header{display:flex;align-items:center;justify-content:space-between;padding:26px 0 0;gap:18px;flex-wrap:wrap}
+.wordmark{display:flex;align-items:center;gap:12px}
+.wm-ic{width:44px;height:44px;border-radius:14px;
+  background:linear-gradient(135deg,var(--sky),#6b44ff);
+  display:grid;place-items:center;font-size:20px;
+  box-shadow:0 0 36px rgba(61,107,255,.38);position:relative;overflow:hidden;flex-shrink:0}
+.wm-ic::before{content:'';position:absolute;inset:0;background:linear-gradient(155deg,rgba(255,255,255,.22),transparent 55%)}
+.wm-name{font-family:var(--serif);font-size:1.1rem;line-height:1.2}
+.wm-by{font-size:.7rem;color:var(--fog);font-family:var(--mono);margin-top:1px}
+.step-nav{display:flex;gap:3px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:5px;flex-wrap:wrap}
+.snb{display:flex;align-items:center;gap:8px;border:0;background:transparent;color:var(--fog);
+  padding:9px 14px;border-radius:11px;cursor:pointer;font-family:var(--body);font-size:.8rem;font-weight:600;
+  transition:.16s all ease;white-space:nowrap}
+.snb:hover{color:var(--w)}
+.snb.active{background:rgba(255,255,255,.09);color:var(--w)}
+.snb.done .snn{background:var(--jade);color:#fff;border-color:transparent}
+.snn{width:20px;height:20px;border-radius:6px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);
+  display:grid;place-items:center;font-family:var(--mono);font-size:.62rem;font-weight:600;color:var(--fog);
+  transition:.18s all ease;flex-shrink:0}
+.snb.active .snn{background:var(--sky);color:#fff;border-color:transparent}
+
+/* ── PANELS ── */
+.panel{display:none}
+.panel.active{display:block;animation:rise .36s cubic-bezier(.16,1,.3,1)}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── HERO ── */
+.hero{padding:66px 0 52px;display:grid;grid-template-columns:1fr 400px;gap:44px;align-items:center}
+.kicker{font-family:var(--mono);font-size:.7rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--sky2);margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.kicker::before{content:'';width:24px;height:1px;background:var(--sky2)}
+h1.ht{font-family:var(--serif);font-size:clamp(2.5rem,4.8vw,4rem);line-height:1.03;letter-spacing:-.02em;margin-bottom:20px}
+h1.ht em{font-style:italic;color:var(--sky2)}
+.hsub{font-size:.96rem;color:var(--fog);line-height:1.72;max-width:52ch;margin-bottom:34px}
+.cta-row{display:flex;gap:11px;flex-wrap:wrap}
+.btn{border:0;cursor:pointer;border-radius:12px;font-family:var(--body);font-weight:700;font-size:.88rem;transition:.18s all ease;padding:13px 20px}
+.btn-p{background:linear-gradient(135deg,var(--sky),#6b44ff);color:#fff;box-shadow:0 8px 26px rgba(61,107,255,.33)}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(61,107,255,.44)}
+.btn-g{background:rgba(255,255,255,.06);color:var(--w);border:1px solid rgba(255,255,255,.1)}
+.btn-g:hover{background:rgba(255,255,255,.1)}
+.btn-e{background:linear-gradient(135deg,var(--ember),var(--ember2));color:#fff;box-shadow:0 8px 24px rgba(255,102,48,.28)}
+.btn-e:hover{transform:translateY(-2px)}
+
+/* FLOW CARD */
+.flow-card{background:var(--ink2);border:1px solid rgba(255,255,255,.07);border-radius:22px;padding:26px}
+.fch{font-family:var(--mono);font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--fog);margin-bottom:18px}
+.fs{display:flex;gap:13px;align-items:flex-start;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.fs:last-child{border-bottom:0;padding-bottom:0}
+.fsi{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:15px;flex-shrink:0;margin-top:1px}
+.fst{font-size:.87rem;font-weight:700;margin-bottom:2px;letter-spacing:-.01em}
+.fsd{font-size:.78rem;color:var(--fog);line-height:1.5}
+.rule{margin-top:24px;padding:14px;border-radius:12px;background:rgba(61,107,255,.08);border:1px solid rgba(61,107,255,.16);font-size:.79rem;font-family:var(--mono);color:var(--sky2);line-height:1.6}
+
+/* ── SECTION HEAD ── */
+.sh{padding:58px 0 34px}
+.sk{font-family:var(--mono);font-size:.67rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--fog);margin-bottom:11px;display:block}
+.sh h2{font-family:var(--serif);font-size:clamp(1.85rem,3vw,2.8rem);letter-spacing:-.02em;line-height:1.07;margin-bottom:11px}
+.sh p{font-size:.91rem;color:var(--fog);line-height:1.68;max-width:66ch}
+
+/* ── COMMON ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.card{background:var(--ink2);border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:20px}
+
+.tag{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;font-size:.72rem;font-weight:700;font-family:var(--mono)}
+.tg{background:rgba(23,184,122,.1);color:var(--jade2);border:1px solid rgba(23,184,122,.2)}
+.tb{background:rgba(61,107,255,.12);color:var(--sky2);border:1px solid rgba(61,107,255,.2)}
+.ta{background:rgba(224,156,42,.1);color:var(--gold2);border:1px solid rgba(224,156,42,.2)}
+.tr{background:rgba(232,51,80,.1);color:#ff7085;border:1px solid rgba(232,51,80,.2)}
+.tv{background:rgba(139,92,246,.1);color:var(--violet2);border:1px solid rgba(139,92,246,.2)}
+.to{background:rgba(255,102,48,.1);color:var(--ember2);border:1px solid rgba(255,102,48,.2)}
+
+/* TABS */
+.tabs{display:flex;gap:7px;margin-bottom:18px;flex-wrap:wrap}
+.tab{border:1px solid rgba(255,255,255,.1);background:transparent;color:var(--fog);padding:9px 16px;border-radius:10px;cursor:pointer;font-family:var(--body);font-weight:600;font-size:.8rem;transition:.14s all ease}
+.tab.active{background:rgba(255,255,255,.08);color:var(--w);border-color:rgba(255,255,255,.18)}
+.tview{display:none}.tview.active{display:block;animation:rise .22s ease}
+
+/* TABLE */
+.et{width:100%;border-collapse:collapse}
+.et thead tr{border-bottom:1px solid rgba(255,255,255,.08)}
+.et th{text-align:left;padding:11px 13px;font-family:var(--mono);font-size:.66rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)}
+.et td{padding:14px 13px;font-size:.87rem;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+.et tr:last-child td{border-bottom:0}
+.et tr:hover td{background:rgba(255,255,255,.02)}
+.et .nm{font-weight:700;font-size:.9rem}
+.yes{color:var(--jade2);font-weight:700}
+.warn{color:var(--gold2);font-weight:700}
+.no{color:var(--rose);font-weight:700}
+.pill{display:inline-block;padding:5px 11px;border-radius:999px;font-size:.72rem;font-weight:700;font-family:var(--mono)}
+.ps{background:rgba(23,184,122,.12);color:var(--jade2);border:1px solid rgba(23,184,122,.2)}
+.ph{background:rgba(61,107,255,.12);color:var(--sky2);border:1px solid rgba(61,107,255,.2)}
+.pe{background:rgba(224,156,42,.12);color:var(--gold2);border:1px solid rgba(224,156,42,.2)}
+.pd{background:rgba(232,51,80,.12);color:#ff7085;border:1px solid rgba(232,51,80,.2)}
+
+/* QUAD */
+.qw{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:10px;position:relative}
+.qw::before,.qw::after{content:'';position:absolute;background:rgba(255,255,255,.08);z-index:0}
+.qw::before{left:calc(50% - .5px);top:8px;bottom:8px;width:1px}
+.qw::after{top:calc(50% - .5px);left:8px;right:8px;height:1px}
+.qc{padding:17px;border-radius:14px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);position:relative;z-index:1;transition:.18s all ease;cursor:default}
+.qc:hover{background:rgba(255,255,255,.045);border-color:rgba(255,255,255,.1)}
+.qc h4{font-size:.9rem;font-weight:700;margin:7px 0 5px;letter-spacing:-.01em}
+.qc p{font-size:.77rem;color:var(--fog);line-height:1.55}
+.axl{display:flex;justify-content:space-between;margin-top:10px;font-size:.7rem;color:var(--fog);font-family:var(--mono);font-weight:600}
+.hint{margin-top:18px;padding:13px 16px;border-radius:12px;background:rgba(61,107,255,.07);border:1px solid rgba(61,107,255,.15);font-size:.79rem;font-family:var(--mono);color:var(--sky2);line-height:1.6}
+
+/* ── GAME ── */
+.xpbar{background:var(--ink2);border:1px solid rgba(255,255,255,.06);border-radius:15px;padding:15px 18px;display:flex;align-items:center;gap:16px;margin-bottom:20px}
+.xpav{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,rgba(61,107,255,.3),rgba(107,68,255,.3));border:1px solid rgba(61,107,255,.25);display:grid;place-items:center;font-size:17px;flex-shrink:0}
+.xpmeta{flex:1}
+.xptop{display:flex;justify-content:space-between;margin-bottom:6px}
+.xptag{font-family:var(--mono);font-size:.65rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)}
+.xppts{font-family:var(--mono);font-size:.65rem;font-weight:600;color:var(--gold2)}
+.xptr{height:5px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden}
+.xpf{height:100%;background:linear-gradient(90deg,var(--sky),#a78bfa);width:0%;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.bdgs{display:flex;gap:7px;flex-wrap:wrap}
+.bdg{padding:5px 11px;border-radius:999px;font-size:.68rem;font-weight:700;font-family:var(--mono);border:1px solid rgba(255,255,255,.08);color:var(--fog);background:rgba(255,255,255,.03);transition:.22s all ease}
+.bdg.on{color:var(--gold2);border-color:rgba(224,156,42,.3);background:rgba(224,156,42,.08)}
+
+.ggrid{display:grid;grid-template-columns:1.1fr .9fr;gap:20px}
+.cc{background:var(--ink2);border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:24px;transition:.38s border-color ease,.38s box-shadow ease}
+.cc.fok{border-color:rgba(23,184,122,.4);box-shadow:0 0 36px rgba(23,184,122,.1)}
+.cc.fno{border-color:rgba(232,51,80,.35);box-shadow:0 0 36px rgba(232,51,80,.08)}
+.chd{font-family:var(--mono);font-size:.65rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--fog);display:flex;align-items:center;gap:9px;margin-bottom:16px}
+.chd::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.06)}
+.ctit{font-family:var(--serif);font-size:1.3rem;line-height:1.2;margin-bottom:9px;letter-spacing:-.01em}
+.cdesc{font-size:.86rem;color:var(--fog);line-height:1.65;margin-bottom:20px}
+.qgr{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.qbl{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:13px;padding:13px}
+.ql{font-family:var(--mono);font-size:.63rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-bottom:9px;display:block}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid rgba(255,255,255,.1);background:transparent;color:var(--fog);padding:6px 12px;border-radius:999px;cursor:pointer;font-family:var(--body);font-weight:600;font-size:.79rem;transition:.14s all ease}
+.chip:hover{border-color:rgba(61,107,255,.4);color:var(--w)}
+.chip.sel{border-color:rgba(61,107,255,.5);color:#7baeff;background:rgba(61,107,255,.14)}
+.gbtns{display:flex;gap:9px}
+.bchk{background:linear-gradient(135deg,var(--sky),#6b44ff);color:#fff;padding:11px 18px;border-radius:11px;font-weight:700;font-size:.85rem;box-shadow:0 4px 18px rgba(61,107,255,.3)}
+.bchk:hover{transform:translateY(-1px)}
+.bnxt{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--w);padding:10px 18px;border-radius:11px;font-weight:700;font-size:.85rem}
+.bnxt:hover{background:rgba(255,255,255,.08)}
+
+.gside{display:flex;flex-direction:column;gap:13px}
+.scbx{background:var(--ink2);border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:20px;text-align:center}
+.scn{font-family:var(--serif);font-size:3.6rem;line-height:1;letter-spacing:-.05em;margin:9px 0 5px}
+.scl{font-family:var(--mono);font-size:.63rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)}
+.dots{display:flex;gap:5px;justify-content:center;margin-top:12px}
+.dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);transition:.28s all ease}
+.dot.ok{background:var(--jade);border-color:var(--jade);box-shadow:0 0 7px rgba(23,184,122,.5)}
+.dot.no{background:var(--rose);border-color:var(--rose)}
+.fbbx{background:var(--ink2);border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:19px;flex:1}
+.fbl{font-family:var(--mono);font-size:.63rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-bottom:13px}
+.fbe{font-size:.84rem;color:var(--fog);line-height:1.65}
+.fbr{display:none}.fbr.show{display:block;animation:rise .2s ease}
+.fbtags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:11px}
+.fbt{padding:4px 9px;border-radius:999px;font-size:.69rem;font-weight:700;font-family:var(--mono)}
+.ftok{background:rgba(23,184,122,.1);color:var(--jade2);border:1px solid rgba(23,184,122,.2)}
+.ftno{background:rgba(224,156,42,.1);color:var(--gold2);border:1px solid rgba(224,156,42,.2)}
+.ftq{background:rgba(61,107,255,.1);color:var(--sky2);border:1px solid rgba(61,107,255,.2)}
+.ftas{background:rgba(23,184,122,.1);color:var(--jade2);border:1px solid rgba(23,184,122,.2)}
+.ftah{background:rgba(61,107,255,.1);color:var(--sky2);border:1px solid rgba(61,107,255,.2)}
+.ftae{background:rgba(224,156,42,.1);color:var(--gold2);border:1px solid rgba(224,156,42,.2)}
+.ftad{background:rgba(232,51,80,.1);color:#ff7085;border:1px solid rgba(232,51,80,.2)}
+.fbex{font-size:.82rem;color:var(--fog);line-height:1.65;margin-bottom:9px}
+.fbmd{padding:10px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);font-size:.77rem;color:var(--fog);line-height:1.7}
+.fbmd em{color:var(--w);font-style:normal;font-weight:600}
+
+/* COMPLETION */
+.compl{text-align:center;padding:52px 20px;animation:rise .38s ease}
+.ctro{font-size:4rem;display:block;margin-bottom:16px}
+.csco{font-family:var(--serif);font-size:5.5rem;line-height:1;letter-spacing:-.06em;color:var(--gold2);margin:11px 0}
+.crk{font-family:var(--mono);font-size:.72rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--fog);margin-bottom:18px}
+.ch2{font-family:var(--serif);font-size:2.3rem;letter-spacing:-.02em;margin-bottom:9px}
+.cmsg{color:var(--fog);font-size:.92rem;line-height:1.65;max-width:50ch;margin:0 auto 30px}
+.cbtns{display:flex;gap:11px;justify-content:center;flex-wrap:wrap}
+
+/* ── SIM ── */
+.simgrid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.simf,.simo{background:var(--ink2);border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:24px}
+.simf h3,.simo h3{font-family:var(--serif);font-size:1.25rem;letter-spacing:-.02em;margin-bottom:20px}
+.field{margin-bottom:15px}
+.field label{display:block;font-family:var(--mono);font-size:.63rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-bottom:7px}
+select{width:100%;padding:11px 13px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--w);font-family:var(--body);font-size:.87rem;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%238494b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;transition:.14s border-color ease}
+select:focus{outline:0;border-color:rgba(61,107,255,.4)}
+select option{background:#1a2236}
+.btnevl{width:100%;background:linear-gradient(135deg,var(--sky),#6b44ff);color:#fff;padding:13px;border-radius:12px;font-weight:700;font-size:.9rem;box-shadow:0 8px 26px rgba(61,107,255,.3);margin-top:3px}
+.btnevl:hover{transform:translateY(-1px);box-shadow:0 14px 34px rgba(61,107,255,.4)}
+.sempty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:280px;color:var(--fog);text-align:center;gap:12px}
+.sempty-ic{font-size:2.8rem;opacity:.3}
+.oitems{display:flex;flex-direction:column;gap:11px}
+.oi{border:1px solid rgba(255,255,255,.06);border-radius:13px;padding:15px;background:rgba(255,255,255,.02)}
+.oik{font-family:var(--mono);font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-bottom:6px}
+.oiv{font-size:.93rem;font-weight:700;line-height:1.4;letter-spacing:-.01em}
+.oie{font-size:.83rem;color:var(--fog);line-height:1.65;font-weight:400}
+.oi.hl{background:rgba(61,107,255,.06);border-color:rgba(61,107,255,.15)}
+.asc{color:var(--jade2)}.ahd{color:var(--sky2)}.aev{color:var(--gold2)}.adr{color:#ff7085}
+
+/* ── RIESGOS ── */
+.risk-intro{background:var(--ink2);border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:28px;margin-bottom:22px}
+.risk-intro h3{font-family:var(--serif);font-size:1.4rem;letter-spacing:-.02em;margin-bottom:10px}
+.risk-intro p{font-size:.88rem;color:var(--fog);line-height:1.68}
+.risk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}
+.rcard{background:var(--ink2);border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:20px;transition:.18s all ease;cursor:default}
+.rcard:hover{border-color:rgba(255,255,255,.13);background:rgba(255,255,255,.03)}
+.rcard-icon{font-size:1.5rem;margin-bottom:12px;display:block}
+.rcard h4{font-size:.93rem;font-weight:700;margin-bottom:8px;letter-spacing:-.01em}
+.rcard p{font-size:.8rem;color:var(--fog);line-height:1.6}
+.rcard .rlevel{margin-top:12px;display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.rdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.rdot.alto{background:var(--rose)}
+.rdot.medio{background:var(--gold2)}
+.rdot.bajo{background:var(--jade2)}
+
+/* RISK CHECKER */
+.rchecker{background:var(--ink2);border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:26px}
+.rchecker h3{font-family:var(--serif);font-size:1.25rem;margin-bottom:18px;letter-spacing:-.02em}
+.rchecklist{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.rcitem{display:flex;align-items:flex-start;gap:12px;padding:14px;border-radius:13px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);cursor:pointer;transition:.15s all ease;user-select:none}
+.rcitem:hover{background:rgba(255,255,255,.04)}
+.rcitem.checked{border-color:rgba(232,51,80,.35);background:rgba(232,51,80,.06)}
+.rcitem.ok{border-color:rgba(23,184,122,.3);background:rgba(23,184,122,.05)}
+.rcbox{width:20px;height:20px;border-radius:6px;border:1px solid rgba(255,255,255,.2);background:transparent;flex-shrink:0;margin-top:1px;display:grid;place-items:center;font-size:.8rem;transition:.15s all ease}
+.rcitem.checked .rcbox{background:rgba(232,51,80,.2);border-color:rgba(232,51,80,.5);color:var(--rose)}
+.rcitem.ok .rcbox{background:rgba(23,184,122,.2);border-color:rgba(23,184,122,.5);color:var(--jade2)}
+.rctext{font-size:.83rem;line-height:1.55;color:var(--fog)}
+.rctext strong{color:var(--w);font-weight:600;display:block;margin-bottom:2px}
+.risk-result{padding:16px;border-radius:14px;margin-top:4px;font-size:.87rem;line-height:1.65;font-family:var(--mono);display:none}
+.risk-result.show{display:block;animation:rise .25s ease}
+.risk-low{background:rgba(23,184,122,.07);border:1px solid rgba(23,184,122,.2);color:var(--jade2)}
+.risk-med{background:rgba(224,156,42,.07);border:1px solid rgba(224,156,42,.2);color:var(--gold2)}
+.risk-hi{background:rgba(232,51,80,.07);border:1px solid rgba(232,51,80,.2);color:#ff7085}
+
+/* ── GLOSARIO ── */
+.gsearch{width:100%;padding:13px 15px;border-radius:13px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--w);font-family:var(--body);font-size:.92rem;margin-bottom:22px;transition:.14s border-color ease}
+.gsearch:focus{outline:0;border-color:rgba(61,107,255,.4)}
+.gsearch::placeholder{color:rgba(132,148,184,.4)}
+.gfilt{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:20px}
+.gfc{border:1px solid rgba(255,255,255,.1);background:transparent;color:var(--fog);padding:7px 14px;border-radius:999px;cursor:pointer;font-family:var(--body);font-weight:600;font-size:.78rem;transition:.14s all ease}
+.gfc.active{background:rgba(255,255,255,.08);color:var(--w);border-color:rgba(255,255,255,.18)}
+.gdict{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.gitem{background:var(--ink2);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:18px;transition:.18s all ease}
+.gitem:hover{border-color:rgba(255,255,255,.13);background:rgba(255,255,255,.025)}
+.gitem h4{font-size:.93rem;font-weight:700;margin-bottom:7px;letter-spacing:-.01em}
+.gitem p{font-size:.8rem;color:var(--fog);line-height:1.6}
+
+/* ── FICHA ── */
+.ficha{background:var(--ink2);border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:28px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.ff{display:flex;flex-direction:column;gap:7px}
+.ff label{font-family:var(--mono);font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog)}
+.fi{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 13px;color:var(--w);font-family:var(--body);font-size:.88rem;resize:none;transition:.14s border-color ease}
+.fi:focus{outline:0;border-color:rgba(61,107,255,.4)}
+.fi::placeholder{color:rgba(132,148,184,.35)}
+textarea.fi{min-height:76px;line-height:1.6}
+.flrow{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:24px}
+.flbl{flex:1;min-width:140px}
+.fll{font-family:var(--mono);font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);margin-bottom:7px}
+.flch{display:flex;gap:6px;flex-wrap:wrap}
+.flc{border:1px solid rgba(255,255,255,.1);background:transparent;color:var(--fog);padding:6px 11px;border-radius:999px;cursor:pointer;font-family:var(--body);font-weight:600;font-size:.77rem;transition:.14s all ease}
+.flc:hover{border-color:rgba(61,107,255,.4);color:var(--w)}
+.flc.sel{border-color:rgba(61,107,255,.5);color:#7baeff;background:rgba(61,107,255,.12)}
+
+/* PREVIEW */
+.pvwrap{display:none}.pvwrap.show{display:block;animation:rise .28s ease}
+.pvc{background:var(--w);color:#080a12;border-radius:18px;padding:32px;margin-top:22px}
+.pvh{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:22px;border-bottom:1px solid #dde2ef}
+.pvtit{font-family:var(--serif);font-size:1.7rem;line-height:1.1;letter-spacing:-.02em;margin-bottom:5px;color:#080a12}
+.pvmeta{font-size:.76rem;color:#667395;font-family:var(--mono)}
+.pvbrand{text-align:right}
+.pvbn{font-family:var(--serif);font-size:.92rem;color:#080a12;font-weight:700}
+.pvbs{font-size:.68rem;color:#667395;font-family:var(--mono)}
+.pvba{font-size:.68rem;color:#667395;font-family:var(--mono);margin-top:1px}
+.pvbody{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px}
+.pvi{padding:14px;border-radius:12px;border:1px solid #dde2ef;background:#f7f9ff}
+.pvlk{font-size:.66rem;font-family:var(--mono);font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#667395;margin-bottom:6px}
+.pvlv{font-size:.9rem;font-weight:700;color:#080a12;line-height:1.4}
+.pvdesc{padding:14px;border-radius:12px;border:1px solid #dde2ef;margin-bottom:14px}
+.pvdk{font-size:.66rem;font-family:var(--mono);font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#667395;margin-bottom:6px}
+.pvdv{font-size:.85rem;color:#344054;line-height:1.65}
+.pvft{display:flex;justify-content:space-between;align-items:center;padding-top:18px;border-top:1px solid #dde2ef;flex-wrap:wrap;gap:10px}
+.pvftl{font-size:.7rem;color:#667395;font-family:var(--mono)}
+.pvdec{padding:7px 16px;border-radius:999px;font-weight:800;font-size:.8rem;font-family:var(--mono)}
+.pds{background:#ecfdf5;color:#166534}.pdh{background:#eff6ff;color:#1e40af}.pde{background:#fff7ed;color:#9a3412}.pdd{background:#fef2f2;color:#991b1b}
+.pvmeta-eqvo{margin-top:10px;padding:10px 13px;border-radius:10px;background:#f3f4f8;font-size:.68rem;font-family:var(--mono);color:#667395;line-height:1.6}
+.pbtns{display:flex;gap:9px;margin-top:16px;flex-wrap:wrap}
+.bcp,.bpr{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--w);padding:11px 18px;border-radius:10px;font-weight:700;font-size:.83rem}
+.bcp:hover,.bpr:hover{background:rgba(255,255,255,.1)}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--ink3);border:1px solid rgba(224,156,42,.3);border-radius:15px;padding:13px 20px;display:flex;align-items:center;gap:13px;box-shadow:0 22px 56px rgba(0,0,0,.6);z-index:9999;transition:.42s all cubic-bezier(.34,1.56,.64,1);pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toi{font-size:1.25rem}.tot{font-size:.83rem;font-weight:700;color:var(--gold2)}.tos{font-size:.73rem;color:var(--fog)}
+
+/* FOOTER */
+footer{margin-top:56px;padding:24px 0 0;border-top:1px solid rgba(255,255,255,.06);display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;flex-wrap:wrap}
+.fl{font-size:.78rem;color:var(--fog);font-family:var(--mono);line-height:1.8}
+.fl strong{color:var(--mist)}
+.fl .eqvo-ref{margin-top:8px;padding:10px 13px;border-radius:10px;background:rgba(61,107,255,.07);border:1px solid rgba(61,107,255,.14);font-size:.72rem;color:var(--sky2);line-height:1.65}
+.fr{font-size:.72rem;color:rgba(132,148,184,.5);font-family:var(--mono);text-align:right}
+
+@media(max-width:960px){
+  .hero,.simgrid,.ggrid,.g2,.fgrid,.pvbody{grid-template-columns:1fr}
+  .g3,.risk-grid,.gdict,.rchecklist{grid-template-columns:1fr 1fr}
+  .qw{grid-template-columns:1fr 1fr}
+  .qgr{grid-template-columns:1fr}
+  header{flex-direction:column;align-items:flex-start}
+  .step-nav{flex-wrap:wrap}
+  .flrow{flex-direction:column}
+}
+@media(max-width:580px){
+  .shell{padding:0 14px 70px}
+  .g3,.risk-grid,.gdict,.rchecklist{grid-template-columns:1fr}
+  .qw::before,.qw::after{display:none}
+  .qw{grid-template-columns:1fr}
+  h1.ht{font-size:2.1rem}
+  footer{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="mesh"></div>
+<div id="toast" class="toast"><div class="toi" id="ti">🏆</div><div><div class="tot" id="tt"></div><div class="tos" id="ts"></div></div></div>
+
+<div class="shell">
+<header>
+  <div class="wordmark">
+    <div class="wm-ic">🧠</div>
+    <div><div class="wm-name">Decidir con IA</div><div class="wm-by">por Gisella Salmón</div></div>
+  </div>
+  <nav class="step-nav">
+    <button class="snb active" data-p="inicio"><span class="snn">1</span>Inicio</button>
+    <button class="snb" data-p="entender"><span class="snn">2</span>Entender</button>
+    <button class="snb" data-p="practicar"><span class="snn">3</span>Practicar <span id="snsc" style="font-family:var(--mono);font-size:.64rem;color:var(--gold2);margin-left:2px"></span></button>
+    <button class="snb" data-p="decidir"><span class="snn">4</span>Decidir</button>
+    <button class="snb" data-p="riesgos"><span class="snn">5</span>Riesgos</button>
+    <button class="snb" data-p="glosario"><span class="snn">6</span>Glosario</button>
+    <button class="snb" data-p="compartir"><span class="snn">7</span>Compartir</button>
+  </nav>
+</header>
+
+<!-- 1 INICIO -->
+<div id="inicio" class="panel active">
+  <div class="hero">
+    <div>
+      <div class="kicker">Herramienta de decisión editorial · Metodología E-Q-V-O</div>
+      <h1 class="ht">¿Vale la pena usar IA<br>en <em>este</em> proyecto?</h1>
+      <p class="hsub">No se trata de seguir tendencias. Se trata de tomar decisiones con criterio: definir el problema, medir el valor real, ubicar el retorno esperado, evaluar riesgos editoriales y saber cuándo escalar, cuándo frenar y cuándo descartar.</p>
+      <div class="cta-row">
+        <button class="btn btn-p" onclick="goTo('entender')">Empezar →</button>
+        <button class="btn btn-g" onclick="goTo('practicar')">Ir al juego</button>
+        <button class="btn btn-g" onclick="goTo('riesgos')">Evaluar riesgos</button>
+      </div>
+    </div>
+    <div class="flow-card">
+      <div class="fch">// flujo de 6 pasos</div>
+      <div class="fs"><div class="fsi" style="background:rgba(61,107,255,.14)">📖</div><div><div class="fst">Entender</div><div class="fsd">Matrices E-Q-V-O: valor editorial, ROI estratégico y dónde aplica cada proyecto.</div></div></div>
+      <div class="fs"><div class="fsi" style="background:rgba(23,184,122,.12)">🎯</div><div><div class="fst">Practicar</div><div class="fsd">Juego de 8 casos reales para entrenar el criterio antes de aplicarlo al propio proyecto.</div></div></div>
+      <div class="fs"><div class="fsi" style="background:rgba(224,156,42,.1)">⚡</div><div><div class="fst">Decidir</div><div class="fsd">Simulador de decisión con variables reales: problema, área, valor, plazo y riesgo.</div></div></div>
+      <div class="fs"><div class="fsi" style="background:rgba(232,51,80,.1)">🔍</div><div><div class="fst">Riesgos</div><div class="fsd">Mapa de riesgos editoriales y éticos. Checklist para detectar alertas antes de implementar.</div></div></div>
+      <div class="fs"><div class="fsi" style="background:rgba(139,92,246,.1)">📚</div><div><div class="fst">Glosario</div><div class="fsd">Conceptos clave en contexto: hard ROI, soft ROI, cuadrantes, riesgo ético y más.</div></div></div>
+      <div class="fs"><div class="fsi" style="background:rgba(255,102,48,.1)">📄</div><div><div class="fst">Compartir</div><div class="fsd">Genera una ficha de decisión estructurada lista para presentar en una reunión.</div></div></div>
+      <div class="rule">→ Detectar no es decidir. Decidir sin estructura es improvisar.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 2 ENTENDER -->
+<div id="entender" class="panel">
+  <div class="sh"><span class="sk">// paso 2 — comprende el marco E-Q-V-O</span><h2>Dos matrices.<br>Una decisión más clara.</h2><p>Antes de evaluar tu proyecto, entiende con qué lente mirarlo. El marco E-Q-V-O de Pepe Cerezo organiza la decisión en cuatro dimensiones: Eficiencia, Calidad, Valor y Oportunidad.</p></div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('mat',0,this)">Matriz 1 — Valor editorial + negocio</button>
+    <button class="tab" onclick="switchTab('mat',1,this)">Matriz 2 — ROI estratégico C1–C4</button>
+    <button class="tab" onclick="switchTab('mat',2,this)">Marco E-Q-V-O</button>
+  </div>
+  <div id="mat0" class="tview active">
+    <div class="card">
+      <p style="color:var(--fog);font-size:.87rem;line-height:1.7;margin-bottom:20px">La primera pregunta es doble: ¿esto aporta <strong style="color:var(--w)">valor periodístico</strong> (información útil, investigación, servicio) y <strong style="color:var(--w)">valor de negocio</strong> (ingresos, eficiencia, fidelización)? La combinación de ambas determina qué hacer.</p>
+      <table class="et"><thead><tr><th>Tipo de proyecto</th><th>Val. editorial</th><th>Val. negocio</th><th>Acción</th><th>Por qué</th></tr></thead><tbody>
+        <tr><td class="nm">Investigación profunda</td><td class="yes">✓ Alto</td><td class="warn">△ Medio</td><td><span class="pill ph">Mantener</span></td><td style="color:var(--fog);font-size:.81rem">Alto valor reputacional aunque el ROI no sea inmediato.</td></tr>
+        <tr><td class="nm">Servicio útil con modelo</td><td class="yes">✓ Alto</td><td class="yes">✓ Alto</td><td><span class="pill ps">Escalar</span></td><td style="color:var(--fog);font-size:.81rem">Doble valor con métricas claras. El caso más sólido.</td></tr>
+        <tr><td class="nm">Viral superficial</td><td class="no">✕ Bajo</td><td class="warn">△ Incierto</td><td><span class="pill pe">Evaluar</span></td><td style="color:var(--fog);font-size:.81rem">Puede generar clics pero erosiona reputación a largo plazo.</td></tr>
+        <tr><td class="nm">Bajo impacto doble</td><td class="no">✕ Bajo</td><td class="no">✕ Bajo</td><td><span class="pill pd">Eliminar</span></td><td style="color:var(--fog);font-size:.81rem">Sin justificación editorial ni de negocio. No escalar.</td></tr>
+      </tbody></table>
+      <div class="hint">→ Si no puedes justificarlo editorialmente ni como negocio, no tiene sentido escalar.</div>
+    </div>
+  </div>
+  <div id="mat1" class="tview">
+    <div class="card">
+      <p style="color:var(--fog);font-size:.87rem;line-height:1.7;margin-bottom:20px">Una vez que decides que el proyecto vale, esta matriz responde: <strong style="color:var(--w)">¿qué tipo de retorno busca?</strong> Los dos ejes son impacto (¿beneficia la redacción o la audiencia?) y horizonte (¿el resultado se ve pronto o a largo plazo?).</p>
+      <div class="qw">
+        <div class="qc"><span class="tag tv" style="font-size:.62rem">C4 — Interno · Largo</span><h4>Innovación estratégica</h4><p>Nuevas capacidades, transformación estructural, modelos que no existen aún. Mayor riesgo, mayor potencial.</p></div>
+        <div class="qc"><span class="tag tb" style="font-size:.62rem">C3 — Externo · Largo</span><h4>Optimización estratégica</h4><p>Calidad, personalización, experiencia del usuario. Retorno sostenido a mediano o largo plazo.</p></div>
+        <div class="qc"><span class="tag tg" style="font-size:.62rem">C1 — Interno · Corto</span><h4>Eficiencia inmediata</h4><p>Automatización de tareas, ahorro de tiempo y costes. Puerta de entrada más común a la IA.</p></div>
+        <div class="qc"><span class="tag ta" style="font-size:.62rem">C2 — Externo · Corto</span><h4>Ingresos inmediatos</h4><p>Monetización directa, conversión a suscripción, publicidad optimizada. Hard ROI medible.</p></div>
+      </div>
+      <div class="axl"><span>← Interno</span><span>Externo →</span></div>
+      <div class="hint">→ La primera matriz responde "¿qué hago?". Esta responde "¿qué tipo de retorno espero y cuándo?".</div>
+    </div>
+  </div>
+  <div id="mat2" class="tview">
+    <div class="g2">
+      <div class="card"><div class="tag tb" style="margin-bottom:12px">E — Eficiencia</div><h3 style="font-family:var(--serif);font-size:1.1rem;margin-bottom:9px;letter-spacing:-.02em">¿Cuánto tiempo y coste ahorra?</h3><p style="color:var(--fog);font-size:.85rem;line-height:1.65">Evalúa si el proyecto automatiza tareas repetitivas, reduce fricción operativa o libera al equipo para trabajo de mayor valor. La eficiencia es el punto de entrada más común a la IA en redacciones.</p><div class="hint" style="margin-top:14px">→ ¿Cuántas horas/semana se ahorran? ¿A qué coste de implementación?</div></div>
+      <div class="card"><div class="tag tg" style="margin-bottom:12px">Q — Calidad</div><h3 style="font-family:var(--serif);font-size:1.1rem;margin-bottom:9px;letter-spacing:-.02em">¿Mejora el producto periodístico?</h3><p style="color:var(--fog);font-size:.85rem;line-height:1.65">Analiza si el proyecto eleva la calidad percibida del contenido, mejora la experiencia del usuario o fortalece la relación con la audiencia. La calidad no siempre es medible a corto plazo.</p><div class="hint" style="margin-top:14px">→ ¿El periodista tiene más capacidad de investigar, contextualizar o personalizar?</div></div>
+      <div class="card"><div class="tag ta" style="margin-bottom:12px">V — Valor</div><h3 style="font-family:var(--serif);font-size:1.1rem;margin-bottom:9px;letter-spacing:-.02em">¿Genera retorno medible?</h3><p style="color:var(--fog);font-size:.85rem;line-height:1.65">Distingue entre hard ROI (ingresos, suscripciones, publicidad) y soft ROI (fidelización, reputación, escalabilidad). No todo valor es inmediato, pero debe poder medirse en algún horizonte.</p><div class="hint" style="margin-top:14px">→ ¿Tienes una métrica concreta para medir el éxito en 3 o 12 meses?</div></div>
+      <div class="card"><div class="tag to" style="margin-bottom:12px">O — Oportunidad</div><h3 style="font-family:var(--serif);font-size:1.1rem;margin-bottom:9px;letter-spacing:-.02em">¿Es el momento y el contexto correcto?</h3><p style="color:var(--fog);font-size:.85rem;line-height:1.65">Evalúa si el entorno (tecnológico, competitivo, regulatorio, de audiencia) es favorable para implementar ahora. Una buena idea en el momento equivocado puede fracasar por razones externas al proyecto.</p><div class="hint" style="margin-top:14px">→ ¿Tiene el equipo la capacidad técnica y editorial para ejecutarlo hoy?</div></div>
+    </div>
+  </div>
+  <div style="margin-top:26px;display:flex;justify-content:flex-end"><button class="btn btn-p" onclick="goTo('practicar')">Practicar con casos reales →</button></div>
+</div>
+
+<!-- 3 PRACTICAR -->
+<div id="practicar" class="panel">
+  <div class="sh" style="padding-bottom:16px"><span class="sk">// paso 3 — entrena tu criterio</span><h2>8 casos. 8 decisiones.</h2><p>Clasifica cada caso usando las cuatro variables del modelo. El objetivo no es memorizar: es que la lógica se vuelva instintiva antes de aplicarla a tu proyecto real.</p></div>
+  <div id="gmain">
+    <div class="xpbar">
+      <div class="xpav">🎯</div>
+      <div class="xpmeta">
+        <div class="xptop"><span class="xptag">PROGRESO</span><span class="xppts" id="xptxt">0 / 8 casos</span></div>
+        <div class="xptr"><div class="xpf" id="xpf"></div></div>
+      </div>
+      <div class="bdgs"><div class="bdg" id="b1">⚡ 1er acierto</div><div class="bdg" id="b2">🔥 Racha ×3</div><div class="bdg" id="b3">🏆 Completado</div><div class="bdg" id="b4">💎 Perfecto</div></div>
+    </div>
+    <div class="ggrid">
+      <div class="cc" id="ccard">
+        <div class="chd" id="cnum">CASO 01 / 08</div>
+        <div class="ctit" id="ctit"></div>
+        <div class="cdesc" id="cdesc"></div>
+        <div class="qgr">
+          <div class="qbl"><span class="ql">Valor editorial</span><div class="chips" id="ced"></div></div>
+          <div class="qbl"><span class="ql">Valor negocio</span><div class="chips" id="cneg"></div></div>
+          <div class="qbl"><span class="ql">Tipo de impacto</span><div class="chips" id="cimp"></div></div>
+          <div class="qbl"><span class="ql">Horizonte</span><div class="chips" id="chor"></div></div>
+        </div>
+        <div class="gbtns"><button class="btn bchk" id="bchk">Ver resultado</button><button class="btn bnxt" id="bnxt">Siguiente →</button></div>
+      </div>
+      <div class="gside">
+        <div class="scbx"><div class="scl">PUNTAJE</div><div class="scn" id="scn">0<span style="font-size:1.5rem;color:var(--fog)"> / 8</span></div><div class="dots" id="dots"></div></div>
+        <div class="fbbx"><div class="fbl">// Feedback del caso</div><p class="fbe" id="fbe">Selecciona las cuatro variables y pulsa "Ver resultado".</p><div class="fbr" id="fbr"><div class="fbtags" id="fbtags"></div><div class="fbex" id="fbex"></div><div class="fbmd" id="fbmd"></div></div></div>
+      </div>
+    </div>
+  </div>
+  <div id="gdone" class="compl" style="display:none">
+    <span class="ctro">🏆</span><div class="crk">PUNTAJE FINAL</div><div class="csco" id="csco">0 / 8</div><div class="crk" id="cemj" style="margin-bottom:16px"></div>
+    <h2 class="ch2">¡Juego completado!</h2><p class="cmsg" id="cmsg"></p>
+    <div class="cbtns"><button class="btn btn-p" onclick="resetGame()">Jugar de nuevo</button><button class="btn btn-g" onclick="goTo('decidir')">Evaluar mi proyecto →</button></div>
+  </div>
+</div>
+
+<!-- 4 DECIDIR -->
+<div id="decidir" class="panel">
+  <div class="sh"><span class="sk">// paso 4 — evalúa tu proyecto</span><h2>Simulador de decisión.</h2><p>Configura las variables de tu proyecto real y obtén una recomendación estructurada basada en el marco E-Q-V-O. No reemplaza el criterio humano: lo organiza para argumentarlo.</p></div>
+  <div class="simgrid">
+    <div class="simf"><h3>Tu proyecto</h3>
+      <div class="field"><label>Problema a resolver</label><select id="sp"><option value="ahorro">Ahorrar tiempo en tareas repetitivas</option><option value="conversion">Mejorar conversión a suscripción</option><option value="engagement">Aumentar engagement / experiencia</option><option value="nuevo">Crear un nuevo producto o capacidad</option><option value="viral">Producir más contenido más rápido</option></select></div>
+      <div class="field"><label>Área impactada</label><select id="sa"><option value="interno">Redacción / operaciones internas</option><option value="externo">Audiencia / mercado</option></select></div>
+      <div class="field"><label>Tipo de valor esperado</label><select id="sv"><option value="eficiencia">Eficiencia operativa (E)</option><option value="calidad">Calidad / experiencia (Q)</option><option value="ingresos">Valor / ingresos directos (V)</option><option value="innovacion">Oportunidad / innovación (O)</option></select></div>
+      <div class="field"><label>Horizonte temporal</label><select id="sh2"><option value="corto">Corto plazo</option><option value="largo">Largo plazo</option></select></div>
+      <div class="field"><label>Riesgo editorial percibido</label><select id="sr"><option value="bajo">Bajo</option><option value="medio">Medio</option><option value="alto">Alto</option></select></div>
+      <button class="btn btnevl" onclick="runSim()">Evaluar proyecto →</button>
+    </div>
+    <div class="simo"><h3>Resultado</h3>
+      <div class="sempty" id="sempty"><div class="sempty-ic">◎</div><div style="font-size:.86rem;line-height:1.6">Configura las variables y<br>evalúa tu proyecto real.</div></div>
+      <div class="oitems" id="sout" style="display:none">
+        <div class="oi"><div class="oik">Tipo de ROI</div><div class="oiv" id="oroi">—</div></div>
+        <div class="oi"><div class="oik">Cuadrante E-Q-V-O</div><div class="oiv" id="oquad">—</div></div>
+        <div class="oi"><div class="oik">Acción recomendada</div><div class="oiv" id="oact">—</div></div>
+        <div class="oi hl"><div class="oik">Lectura estratégica</div><div class="oie" id="oexp">—</div></div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:24px;display:flex;gap:10px;justify-content:flex-end">
+    <button class="btn btn-g" onclick="goTo('riesgos')">Evaluar riesgos →</button>
+    <button class="btn btn-p" onclick="goTo('compartir')">Generar ficha →</button>
+  </div>
+</div>
+
+<!-- 5 RIESGOS -->
+<div id="riesgos" class="panel">
+  <div class="sh"><span class="sk">// paso 5 — evalúa los riesgos antes de implementar</span><h2>Mapa de riesgos editoriales.</h2><p>Usar IA en un medio no es solo una decisión de negocio. Implica riesgos editoriales, éticos, legales y reputacionales que deben identificarse antes de escalar. Cerezo los denomina el lado oscuro de la oportunidad.</p></div>
+
+  <div class="risk-grid">
+    <div class="rcard"><span class="rcard-icon">🎭</span><div class="tag tr" style="margin-bottom:10px;font-size:.65rem">Riesgo alto</div><h4>Alucinaciones y datos falsos</h4><p>La IA generativa puede producir información incorrecta con apariencia de veracidad. Un sistema que se equivoca con autoridad exige verificación humana reforzada en todo momento.</p><div class="rlevel"><div class="rdot alto"></div><span>Alto · Impacto directo en credibilidad</span></div></div>
+    <div class="rcard"><span class="rcard-icon">⚖️</span><div class="tag tr" style="margin-bottom:10px;font-size:.65rem">Riesgo alto</div><h4>Derechos de autor y propiedad intelectual</h4><p>Los modelos se entrenan con contenidos que pueden incluir obras protegidas. Los medios deben proteger sus propios contenidos y verificar las fuentes de entrenamiento que utilizan.</p><div class="rlevel"><div class="rdot alto"></div><span>Alto · Implicaciones legales</span></div></div>
+    <div class="rcard"><span class="rcard-icon">🔍</span><div class="tag ta" style="margin-bottom:10px;font-size:.65rem">Riesgo medio</div><h4>Sesgos algorítmicos</h4><p>Los sistemas de IA replican los sesgos presentes en sus datos de entrenamiento. Pueden invisibilizar voces minoritarias, amplificar estereotipos o afectar la pluralidad informativa del medio.</p><div class="rlevel"><div class="rdot medio"></div><span>Medio · Supervisión editorial necesaria</span></div></div>
+    <div class="rcard"><span class="rcard-icon">🔒</span><div class="tag ta" style="margin-bottom:10px;font-size:.65rem">Riesgo medio</div><h4>Privacidad y datos de usuarios</h4><p>El uso de IA para personalización implica procesar datos de audiencia. Genera obligaciones regulatorias (RGPD, regulación IA UE) y riesgos de confianza si no se gestiona con transparencia.</p><div class="rlevel"><div class="rdot medio"></div><span>Medio · Marco regulatorio en evolución</span></div></div>
+    <div class="rcard"><span class="rcard-icon">👁️</span><div class="tag ta" style="margin-bottom:10px;font-size:.65rem">Riesgo medio</div><h4>Opacidad y falta de transparencia</h4><p>Si el medio no comunica cuándo y cómo usa IA, erosiona la confianza del lector. La transparencia no es solo ética: es fundamental para mantener la relación con la audiencia.</p><div class="rlevel"><div class="rdot medio"></div><span>Medio · Impacto en confianza</span></div></div>
+    <div class="rcard"><span class="rcard-icon">🧑‍💼</span><div class="tag tg" style="margin-bottom:10px;font-size:.65rem">Riesgo gestionable</div><h4>Dependencia tecnológica</h4><p>Externalizar procesos clave a plataformas de IA puede generar dependencia estratégica. Las alianzas con empresas de IA pueden ser pan para hoy y hambre para mañana, según Cerezo.</p><div class="rlevel"><div class="rdot bajo"></div><span>Bajo–Medio · Gestión estratégica</span></div></div>
+    <div class="rcard"><span class="rcard-icon">📰</span><div class="tag tg" style="margin-bottom:10px;font-size:.65rem">Riesgo gestionable</div><h4>Pérdida de identidad editorial</h4><p>La automatización de contenidos puede homogenizar la voz del medio. El riesgo no es usar IA, sino delegar en ella decisiones que definen la propuesta editorial diferencial.</p><div class="rlevel"><div class="rdot bajo"></div><span>Bajo–Medio · Gobernanza editorial</span></div></div>
+    <div class="rcard"><span class="rcard-icon">🌐</span><div class="tag tg" style="margin-bottom:10px;font-size:.65rem">Riesgo gestionable</div><h4>Desinformación y deepfakes</h4><p>La misma tecnología que automatiza contenido puede generar noticias falsas o manipular imágenes y audio. Los medios deben tener políticas claras de verificación y uso responsable.</p><div class="rlevel"><div class="rdot bajo"></div><span>Gestionable · Con políticas claras</span></div></div>
+    <div class="rcard"><span class="rcard-icon">👥</span><div class="tag tb" style="margin-bottom:10px;font-size:.65rem">Riesgo estratégico</div><h4>Impacto en el equipo periodístico</h4><p>La automatización genera incertidumbre sobre roles y empleo. Una implementación sin comunicación interna clara puede deteriorar la cultura editorial y la confianza del equipo.</p><div class="rlevel"><div class="rdot bajo"></div><span>Estratégico · Gestión del cambio</span></div></div>
+  </div>
+
+  <div class="rchecker">
+    <h3>Checklist de riesgos para tu proyecto</h3>
+    <p style="font-size:.86rem;color:var(--fog);line-height:1.6;margin-bottom:18px">Marca las alertas que aplican a tu proyecto. Cuantas más actives, mayor es la necesidad de revisar el diseño antes de escalar.</p>
+    <div class="rchecklist" id="rckl">
+      <div class="rcitem" onclick="toggleRisk(this)"><div class="rcbox">✓</div><div class="rctext"><strong>Sin verificación humana definida</strong>El proyecto no contempla revisión editorial de los outputs generados por la IA.</div></div>
+      <div class="rcitem" onclick="toggleRisk(this)"><div class="rcbox">✓</div><div class="rctext"><strong>Fuente de datos poco transparente</strong>Se desconoce con qué datos se entrenó el modelo o si incluye contenido protegido.</div></div>
+      <div class="rcitem" onclick="toggleRisk(this)"><div class="rcbox">✓</div><div class="rctext"><strong>No hay política de divulgación al lector</strong>El medio no informará cuándo el contenido fue generado o asistido por IA.</div></div>
+      <div class="rcitem" onclick="toggleRisk(this)"><div class="rcbox">✓</div><div class="rctext"><strong>Dependencia de una sola plataforma</strong>Todo el proyecto depende de un proveedor de IA externo sin plan de contingencia.</div></div>
+      <div class="rcitem" onclick="toggleRisk(this)"><div class="rcbox">✓</div><div class="rctext"><strong>Impacto en roles del equipo no comunicado</strong>No hay plan de comunicación interna sobre cómo afecta al equipo periodístico.</div></div>
+      <div class="rcitem" onclick="toggleRisk(this)"><div class="rcbox">✓</div><div class="rctext"><strong>Sin métricas de control de calidad</strong>No existe forma de medir si los outputs de IA mantienen los estándares editoriales del medio.</div></div>
+      <div class="rcitem" onclick="toggleRisk(this)"><div class="rcbox">✓</div><div class="rctext"><strong>Manejo de datos de usuarios sin revisar</strong>El proyecto procesa datos personales de audiencia sin haber revisado cumplimiento regulatorio.</div></div>
+      <div class="rcitem" onclick="toggleRisk(this)"><div class="rcbox">✓</div><div class="rctext"><strong>Riesgo de homogenización editorial</strong>El uso de IA puede borrar la voz y propuesta diferencial del medio sin que nadie lo controle.</div></div>
+    </div>
+    <div class="risk-result" id="rrst"></div>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-p" onclick="evalRisk()">Evaluar nivel de riesgo</button>
+      <button class="btn btn-g" onclick="clearRisk()">Limpiar selección</button>
+    </div>
+  </div>
+  <div style="margin-top:24px;display:flex;justify-content:flex-end"><button class="btn btn-p" onclick="goTo('glosario')">Ver glosario →</button></div>
+</div>
+
+<!-- 6 GLOSARIO -->
+<div id="glosario" class="panel">
+  <div class="sh"><span class="sk">// paso 6 — conceptos clave</span><h2>Glosario estratégico.</h2><p>Los términos correctos evitan decisiones por impulso o moda. Filtra por categoría o busca el concepto que necesitas.</p></div>
+  <input class="gsearch" id="gsrch" placeholder="Buscar concepto..." oninput="filterG()"/>
+  <div class="gfilt">
+    <button class="gfc active" data-cat="todos" onclick="filterCat(this)">Todos</button>
+    <button class="gfc" data-cat="roi" onclick="filterCat(this)">ROI</button>
+    <button class="gfc" data-cat="cuadrante" onclick="filterCat(this)">Cuadrantes</button>
+    <button class="gfc" data-cat="eqvo" onclick="filterCat(this)">E-Q-V-O</button>
+    <button class="gfc" data-cat="riesgo" onclick="filterCat(this)">Riesgos</button>
+  </div>
+  <div class="gdict" id="gdict">
+    <div class="gitem" data-cat="roi" data-term="hard roi retorno directo"><div class="tag tb" style="margin-bottom:9px;font-size:.65rem">ROI</div><h4>Hard ROI</h4><p>Retorno directo y medible: ingresos, suscripciones, publicidad o ahorro claro de costes. Se cuantifica con métricas específicas en períodos definidos.</p></div>
+    <div class="gitem" data-cat="roi" data-term="soft roi retorno estratégico indirecto"><div class="tag tg" style="margin-bottom:9px;font-size:.65rem">ROI</div><h4>Soft ROI</h4><p>Retorno indirecto pero estratégico: eficiencia, calidad, escalabilidad, experiencia o fidelización. Difícil de medir a corto plazo, esencial para la sostenibilidad.</p></div>
+    <div class="gitem" data-cat="roi" data-term="impacto interno redacción operaciones"><div class="tag tv" style="margin-bottom:9px;font-size:.65rem">ROI</div><h4>Impacto interno</h4><p>Beneficia procesos, operaciones o productividad dentro de la redacción. El usuario final es el equipo, no la audiencia.</p></div>
+    <div class="gitem" data-cat="roi" data-term="impacto externo audiencia mercado"><div class="tag ta" style="margin-bottom:9px;font-size:.65rem">ROI</div><h4>Impacto externo</h4><p>Se expresa en la relación con usuarios, monetización o experiencia del lector. El valor se genera fuera de la organización.</p></div>
+    <div class="gitem" data-cat="cuadrante" data-term="c1 eficiencia inmediata interno corto"><div class="tag tg" style="margin-bottom:9px;font-size:.65rem">Cuadrante</div><h4>C1 — Eficiencia inmediata</h4><p>Interno + corto plazo. Automatización de tareas y ahorro operativo. La puerta de entrada más segura y común a la IA en redacciones.</p></div>
+    <div class="gitem" data-cat="cuadrante" data-term="c2 ingresos inmediatos externo corto"><div class="tag ta" style="margin-bottom:9px;font-size:.65rem">Cuadrante</div><h4>C2 — Ingresos inmediatos</h4><p>Externo + corto plazo. IA para monetización directa, conversión a suscripción o publicidad optimizada. Hard ROI claro y medible.</p></div>
+    <div class="gitem" data-cat="cuadrante" data-term="c3 optimización estratégica externo largo"><div class="tag tb" style="margin-bottom:9px;font-size:.65rem">Cuadrante</div><h4>C3 — Optimización estratégica</h4><p>Externo + largo plazo. Mejora de calidad percibida, personalización y experiencia. El retorno se ve a mediano o largo plazo.</p></div>
+    <div class="gitem" data-cat="cuadrante" data-term="c4 innovación estratégica interno largo"><div class="tag tv" style="margin-bottom:9px;font-size:.65rem">Cuadrante</div><h4>C4 — Innovación estratégica</h4><p>Interno + largo plazo. Nuevas capacidades y productos. Mayor riesgo y horizonte incierto, pero puede abrir caminos futuros.</p></div>
+    <div class="gitem" data-cat="eqvo" data-term="eficiencia eqvo cerezo ahorro tiempo"><div class="tag tb" style="margin-bottom:9px;font-size:.65rem">E-Q-V-O</div><h4>E — Eficiencia</h4><p>Primera dimensión del marco Cerezo. Evalúa si el proyecto automatiza tareas, reduce fricción y libera al equipo para trabajo de mayor valor periodístico.</p></div>
+    <div class="gitem" data-cat="eqvo" data-term="calidad eqvo cerezo producto periodístico"><div class="tag tg" style="margin-bottom:9px;font-size:.65rem">E-Q-V-O</div><h4>Q — Calidad</h4><p>Segunda dimensión. Analiza si el proyecto eleva la calidad del contenido, mejora la experiencia del usuario o fortalece la relación con la audiencia.</p></div>
+    <div class="gitem" data-cat="eqvo" data-term="valor eqvo cerezo hard roi ingresos"><div class="tag ta" style="margin-bottom:9px;font-size:.65rem">E-Q-V-O</div><h4>V — Valor</h4><p>Tercera dimensión. Distingue hard ROI (ingresos medibles) de soft ROI (fidelización, reputación). El valor debe poder medirse en algún horizonte temporal concreto.</p></div>
+    <div class="gitem" data-cat="eqvo" data-term="oportunidad eqvo cerezo momento contexto"><div class="tag to" style="margin-bottom:9px;font-size:.65rem">E-Q-V-O</div><h4>O — Oportunidad</h4><p>Cuarta dimensión. Evalúa si el entorno tecnológico, competitivo, regulatorio y de audiencia es favorable para implementar el proyecto en este momento.</p></div>
+    <div class="gitem" data-cat="riesgo" data-term="alucinación hallucination ia datos falsos"><div class="tag tr" style="margin-bottom:9px;font-size:.65rem">Riesgo</div><h4>Alucinación (hallucination)</h4><p>Fenómeno por el que la IA genera información incorrecta con apariencia de veracidad. Exige verificación humana reforzada en cualquier contexto editorial.</p></div>
+    <div class="gitem" data-cat="riesgo" data-term="sesgo algorítmico bias datos entrenamiento"><div class="tag tr" style="margin-bottom:9px;font-size:.65rem">Riesgo</div><h4>Sesgo algorítmico</h4><p>Los sistemas replican los sesgos de sus datos de entrenamiento. Pueden invisibilizar voces minoritarias, amplificar estereotipos o distorsionar la pluralidad informativa.</p></div>
+    <div class="gitem" data-cat="riesgo" data-term="transparencia divulgación lector confianza"><div class="tag ta" style="margin-bottom:9px;font-size:.65rem">Riesgo</div><h4>Transparencia editorial</h4><p>Obligación de informar al lector cuándo y cómo se usa IA en el contenido. No es solo ética: es fundamental para mantener la confianza de la audiencia.</p></div>
+    <div class="gitem" data-cat="riesgo" data-term="gobernanza ia política uso redacción"><div class="tag tv" style="margin-bottom:9px;font-size:.65rem">Riesgo</div><h4>Gobernanza de la IA</h4><p>Marco de políticas internas que regula cómo los periodistas y editores pueden usar IA en la redacción. Incluye criterios de uso, verificación, divulgación y responsabilidad.</p></div>
+  </div>
+  <div class="hint" style="margin-top:24px">→ La pregunta correcta no es "¿qué puede hacer la IA?", sino "¿qué valor real aporta aquí y ahora, con qué riesgos y bajo qué condiciones?"</div>
+  <div style="margin-top:24px;display:flex;justify-content:flex-end"><button class="btn btn-p" onclick="goTo('compartir')">Generar ficha de decisión →</button></div>
+</div>
+
+<!-- 7 COMPARTIR -->
+<div id="compartir" class="panel">
+  <div class="sh"><span class="sk">// paso 7 — comunica tu decisión</span><h2>Ficha de decisión.</h2><p>Completa los datos de tu proyecto y genera una ficha estructurada lista para presentar en una reunión, un taller o una conversación con tu equipo editorial.</p></div>
+  <div class="ficha">
+    <div class="fgrid">
+      <div class="ff" style="grid-column:span 2"><label>Nombre del proyecto</label><input class="fi" id="fn" placeholder="Ej: Sistema de etiquetado automático de notas" type="text"/></div>
+      <div class="ff" style="grid-column:span 2"><label>Problema que resuelve</label><textarea class="fi" id="fp" placeholder="Describe el problema concreto que este proyecto intenta resolver..."></textarea></div>
+      <div class="ff"><label>Medio / organización</label><input class="fi" id="fm" placeholder="Nombre del medio" type="text"/></div>
+      <div class="ff"><label>Responsable del análisis</label><input class="fi" id="fr" placeholder="Tu nombre" type="text"/></div>
+      <div class="ff" style="grid-column:span 2"><label>Métrica principal de éxito</label><input class="fi" id="fmet" placeholder="Ej: Reducir 30% el tiempo de etiquetado en 3 meses" type="text"/></div>
+      <div class="ff" style="grid-column:span 2"><label>Riesgos identificados</label><textarea class="fi" id="frisk" placeholder="¿Qué podría salir mal? ¿Qué alertas del checklist de riesgos se activaron?"></textarea></div>
+    </div>
+    <div class="flrow">
+      <div class="flbl"><div class="fll">Valor editorial</div><div class="flch"><button class="flc" data-g="ed" data-v="alto">Alto</button><button class="flc" data-g="ed" data-v="bajo">Bajo</button></div></div>
+      <div class="flbl"><div class="fll">Valor negocio</div><div class="flch"><button class="flc" data-g="neg" data-v="alto">Alto</button><button class="flc" data-g="neg" data-v="bajo">Bajo</button></div></div>
+      <div class="flbl"><div class="fll">Impacto</div><div class="flch"><button class="flc" data-g="imp" data-v="interno">Interno</button><button class="flc" data-g="imp" data-v="externo">Externo</button></div></div>
+      <div class="flbl"><div class="fll">Horizonte</div><div class="flch"><button class="flc" data-g="hor" data-v="corto">Corto plazo</button><button class="flc" data-g="hor" data-v="largo">Largo plazo</button></div></div>
+      <div class="flbl"><div class="fll">Decisión</div><div class="flch"><button class="flc" data-g="dec" data-v="Escalar">Escalar</button><button class="flc" data-g="dec" data-v="Mantener">Mantener</button><button class="flc" data-g="dec" data-v="Evaluar">Evaluar</button><button class="flc" data-g="dec" data-v="Eliminar">Eliminar</button></div></div>
+    </div>
+    <button class="btn btn-e" onclick="genFicha()">Generar ficha de decisión →</button>
+  </div>
+  <div class="pvwrap" id="pvwrap">
+    <div class="pvc" id="pvc">
+      <div class="pvh">
+        <div><div class="pvtit" id="pvtit">—</div><div class="pvmeta" id="pvmeta">—</div></div>
+        <div class="pvbrand"><div class="pvbn">Decidir con IA</div><div class="pvbs">Marco de decisión editorial</div><div class="pvba">por Gisella Salmón</div></div>
+      </div>
+      <div class="pvbody">
+        <div class="pvi"><div class="pvlk">Medio / Organización</div><div class="pvlv" id="pvm">—</div></div>
+        <div class="pvi"><div class="pvlk">Responsable</div><div class="pvlv" id="pvr">—</div></div>
+        <div class="pvi"><div class="pvlk">Cuadrante ROI</div><div class="pvlv" id="pvq">—</div></div>
+        <div class="pvi"><div class="pvlk">Clasificación editorial</div><div class="pvlv" id="pvv" style="font-size:.82rem;font-weight:500;line-height:1.7">—</div></div>
+        <div class="pvi"><div class="pvlk">Métrica principal</div><div class="pvlv" id="pvmet">—</div></div>
+        <div class="pvi"><div class="pvlk">Decisión</div><div class="pvdec" id="pvdec" style="display:inline-block;margin-top:4px">—</div></div>
+      </div>
+      <div class="pvdesc"><div class="pvdk">Problema que resuelve</div><div class="pvdv" id="pvp">—</div></div>
+      <div class="pvdesc" style="margin-top:12px"><div class="pvdk">Riesgos identificados</div><div class="pvdv" id="pvrisk">—</div></div>
+      <div class="pvft">
+        <div class="pvftl">Generado con Decidir con IA · por Gisella Salmón</div>
+        <div></div>
+      </div>
+      <div class="pvmeta-eqvo">En base a Metodología E-Q-V-O (Eficiencia, Calidad, Valor, Oportunidad) de Pepe Cerezo · Evoca Media / Digital Journey</div>
+    </div>
+    <div class="pbtns">
+      <button class="btn bcp" onclick="copyF()">📋 Copiar texto</button>
+      <button class="btn bpr" onclick="window.print()">🖨 Imprimir / PDF</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="fl">
+    <strong>Decidir con IA</strong> — Simulador editorial para proyectos con inteligencia artificial<br>
+    Desarrollada por <strong>Gisella Salmón</strong>
+    <div class="eqvo-ref">En base a Metodología E-Q-V-O (Eficiencia, Calidad, Valor, Oportunidad) de Pepe Cerezo · Evoca Media / Digital Journey</div>
+  </div>
+  <div class="fr">Marco de decisión<br>para medios periodísticos</div>
+</footer>
+</div><!-- /shell -->
+
+<script>
+// ── NAV ──
+const pls=document.querySelectorAll('.panel'),snbs=document.querySelectorAll('.snb');
+const order=['inicio','entender','practicar','decidir','riesgos','glosario','compartir'];
+function goTo(id){
+  pls.forEach(p=>p.classList.toggle('active',p.id===id));
+  snbs.forEach(b=>b.classList.toggle('active',b.dataset.p===id));
+  window.scrollTo({top:0,behavior:'smooth'});
+  const ci=order.indexOf(id);
+  snbs.forEach((b,i)=>{if(i>0&&i<ci)b.classList.add('done');else if(i>=ci)b.classList.remove('done')});
+}
+snbs.forEach(b=>b.addEventListener('click',()=>goTo(b.dataset.p)));
+
+// ── TABS ──
+function switchTab(prefix,i,el){
+  document.querySelectorAll(`[id^="${prefix}"]`).forEach((v,j)=>v.classList.toggle('active',j===i));
+  el.closest('.tabs').querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));
+}
+
+// ── TOAST ──
+function toast(ic,t,s){
+  document.getElementById('ti').textContent=ic;document.getElementById('tt').textContent=t;document.getElementById('ts').textContent=s;
+  const el=document.getElementById('toast');el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3400);
+}
+
+// ── GAME ──
+const cases=[
+  {title:"Automatizar metadatos y etiquetado de notas",desc:"La redacción dedica muchas horas a tareas repetitivas. Se busca liberar tiempo sin cambiar el producto editorial principal.",ed:"alto",neg:"bajo",imp:"interno",hor:"corto",action:"Mantener",quad:"C1 – Eficiencia inmediata",explain:"Caso interno de corto plazo. El valor está en eficiencia operativa (E del marco E-Q-V-O), no en monetización directa."},
+  {title:"Paywall dinámico con segmentación por comportamiento",desc:"Mostrar ofertas distintas según el comportamiento del usuario para mejorar la conversión a suscripción.",ed:"alto",neg:"alto",imp:"externo",hor:"corto",action:"Escalar",quad:"C2 – Ingresos inmediatos",explain:"Impacto externo y retorno medible rápido. Caso clásico de hard ROI (V del marco E-Q-V-O) ligado a conversión."},
+  {title:"Personalizar newsletters y recomendaciones",desc:"Que la audiencia reciba contenido más relevante para aumentar recurrencia y lealtad.",ed:"alto",neg:"alto",imp:"externo",hor:"largo",action:"Escalar",quad:"C3 – Optimización estratégica",explain:"Mejora experiencia y fidelización (Q del marco). El retorno se ve mejor en el tiempo que en el corto plazo."},
+  {title:"Crear un nuevo producto editorial con IA",desc:"El medio quiere experimentar con un formato o servicio que hoy no existe y que puede abrir una línea futura.",ed:"alto",neg:"alto",imp:"interno",hor:"largo",action:"Escalar",quad:"C4 – Innovación estratégica",explain:"Construir una capacidad nueva con lógica estratégica de largo plazo (O del marco E-Q-V-O)."},
+  {title:"Generar titulares virales rápidos para captar clics",desc:"La propuesta apunta a volumen y velocidad, con poco valor periodístico y ganancia de negocio incierta.",ed:"bajo",neg:"alto",imp:"externo",hor:"corto",action:"Evaluar",quad:"C2 – Ingresos inmediatos",explain:"Puede tener señal comercial, pero el valor editorial es débil. Conviene evaluar, no escalar automáticamente."},
+  {title:"Asistente para apoyar una investigación compleja",desc:"IA para ordenar documentos y detectar patrones en un trabajo de alto valor reputacional.",ed:"alto",neg:"bajo",imp:"interno",hor:"largo",action:"Mantener",quad:"C4 – Innovación estratégica",explain:"No promete monetización directa, pero sí valor editorial (Q) alto y construcción de capacidad interna."},
+  {title:"Convertir artículos en audio para consumo móvil",desc:"Ampliar formatos para acompañar hábitos de audiencia en movilidad y mejorar experiencia y alcance.",ed:"alto",neg:"alto",imp:"externo",hor:"largo",action:"Escalar",quad:"C3 – Optimización estratégica",explain:"Mejora servicio y experiencia (Q del marco). Valor estratégico externo a mediano o largo plazo."},
+  {title:"Producir cientos de notas automáticas de bajo valor",desc:"Volumen barato, sin utilidad clara ni propuesta editorial diferencial para la audiencia.",ed:"bajo",neg:"bajo",imp:"interno",hor:"corto",action:"Eliminar",quad:"C1 – Eficiencia inmediata",explain:"Puede parecer eficiente, pero sin valor editorial ni de negocio, conviene descartarlo."}
+];
+const optMap={ed:[{v:"alto",l:"Alto"},{v:"bajo",l:"Bajo"}],neg:[{v:"alto",l:"Alto"},{v:"bajo",l:"Bajo"}],imp:[{v:"interno",l:"Interno"},{v:"externo",l:"Externo"}],hor:[{v:"corto",l:"Corto plazo"},{v:"largo",l:"Largo plazo"}]};
+let gi=0,gsco=0,gans=new Array(cases.length).fill(null),gsel={},glk=false;
+function initDots(){const r=document.getElementById('dots');r.innerHTML='';cases.forEach((_,i)=>{const d=document.createElement('div');d.className='dot';d.id='gd'+i;r.appendChild(d)});}
+function updXP(){const done=gans.filter(v=>v!==null).length;document.getElementById('xpf').style.width=`${done/cases.length*100}%`;document.getElementById('xptxt').textContent=`${done} / ${cases.length} casos`;document.getElementById('scn').innerHTML=`${gsco}<span style="font-size:1.5rem;color:var(--fog)"> / ${cases.length}</span>`;document.getElementById('snsc').textContent=gsco?`(${gsco})`:''}
+function rchips(id,key){const w=document.getElementById(id);w.innerHTML='';optMap[key].forEach(({v,l})=>{const b=document.createElement('button');b.className='chip'+(gsel[key]===v?' sel':'');b.textContent=l;b.onclick=()=>{if(glk)return;gsel[key]=v;rchips(id,key)};w.appendChild(b)})}
+function renderCase(){const c=cases[gi];glk=false;gsel={};document.getElementById('cnum').textContent=`CASO ${String(gi+1).padStart(2,'0')} / ${String(cases.length).padStart(2,'0')}`;document.getElementById('ctit').textContent=c.title;document.getElementById('cdesc').textContent=c.desc;rchips('ced','ed');rchips('cneg','neg');rchips('cimp','imp');rchips('chor','hor');document.getElementById('fbe').textContent='Selecciona las cuatro variables y pulsa "Ver resultado".';document.getElementById('fbe').style.display='';document.getElementById('fbr').classList.remove('show');document.getElementById('ccard').className='cc';updXP();}
+function checkGame(){const c=cases[gi];const keys=['ed','neg','imp','hor'];if(keys.some(k=>!gsel[k])){document.getElementById('fbe').textContent='⚠ Completa las cuatro variables.';return}glk=true;const ok=keys.every(k=>gsel[k]===c[k]);const prev=gans[gi];if(prev===null){gans[gi]=ok;if(ok)gsco++;}document.getElementById('gd'+gi).classList.add(ok?'ok':'no');const cc=document.getElementById('ccard');cc.classList.add(ok?'fok':'fno');setTimeout(()=>cc.classList.remove('fok','fno'),480);document.getElementById('fbe').style.display='none';const fr=document.getElementById('fbr');fr.classList.add('show');const ac={Escalar:'ftas',Mantener:'ftah',Evaluar:'ftae',Eliminar:'ftad'};document.getElementById('fbtags').innerHTML=`<span class="fbt ${ok?'ftok':'ftno'}">${ok?'✓ Correcto':'Revisa'}</span><span class="fbt ftq">${c.quad}</span><span class="fbt ${ac[c.action]}">${c.action}</span>`;document.getElementById('fbex').textContent=c.explain;document.getElementById('fbmd').innerHTML=`Respuesta modelo → editorial: <em>${c.ed}</em> · negocio: <em>${c.neg}</em> · impacto: <em>${c.imp}</em> · horizonte: <em>${c.hor}</em>`;if(ok&&prev===null&&gsco===1){document.getElementById('b1').classList.add('on');toast('⚡','¡Primer acierto!','Sigue así')}const last3=gans.slice(0,gi+1).slice(-3);if(last3.length===3&&last3.every(v=>v===true)&&!document.getElementById('b2').classList.contains('on')){document.getElementById('b2').classList.add('on');toast('🔥','¡Racha ×3!','Tres correctas seguidas')}updXP();}
+function nextGame(){gi=(gi+1)%cases.length;if(gi===0&&gans.every(v=>v!==null)){showDone();return}renderCase();}
+function showDone(){document.getElementById('gmain').style.display='none';document.getElementById('gdone').style.display='block';document.getElementById('b3').classList.add('on');document.getElementById('csco').textContent=`${gsco} / ${cases.length}`;const ranks=[[8,'💎','Perfecto. Criterio editorial afilado. Estás listo para evaluar proyectos reales con el marco E-Q-V-O.'],[6,'🥇','Muy bien. Dominas la lógica de las matrices.'],[4,'🥈','Buen camino. Revisa los casos donde dudaste.'],[0,'🥉','Buen inicio. Vuelve a las matrices y practica de nuevo.']];const [,e,m]=ranks.find(([n])=>gsco>=n);document.getElementById('cemj').textContent=e;document.getElementById('cmsg').textContent=m;if(gsco===8){document.getElementById('b4').classList.add('on');toast('💎','¡Perfecto!','8/8 — Criterio editorial afilado')}else toast('🏆','¡Completado!',`${gsco} de 8 correctas`);}
+function resetGame(){gi=0;gsco=0;gans.fill(null);glk=false;document.getElementById('gmain').style.display='';document.getElementById('gdone').style.display='none';['b1','b2','b3','b4'].forEach(id=>document.getElementById(id).classList.remove('on'));initDots();renderCase();}
+document.getElementById('bchk').addEventListener('click',checkGame);
+document.getElementById('bnxt').addEventListener('click',nextGame);
+initDots();renderCase();
+
+// ── SIMULATOR ──
+function qfrom(a,h){if(a==='interno'&&h==='corto')return'C1 – Eficiencia inmediata';if(a==='externo'&&h==='corto')return'C2 – Ingresos inmediatos';if(a==='externo'&&h==='largo')return'C3 – Optimización estratégica';return'C4 – Innovación estratégica';}
+function runSim(){const p=document.getElementById('sp').value,a=document.getElementById('sa').value,v=document.getElementById('sv').value,h=document.getElementById('sh2').value,r=document.getElementById('sr').value;const quad=qfrom(a,h);const roi=(v==='ingresos'||p==='conversion')?'Hard ROI — retorno directo y medible (V en E-Q-V-O)':'Soft ROI — retorno estratégico indirecto';let action='Evaluar',exp='',ac='aev';
+if(p==='viral'){action=r==='alto'?'Eliminar':'Evaluar';ac=r==='alto'?'adr':'aev';exp='El volumen rápido no equivale a valor editorial. Sin propuesta diferencial, el riesgo supera el beneficio.';}
+else if(v==='ingresos'&&a==='externo'&&h==='corto'&&r!=='alto'){action='Escalar';ac='asc';exp='Lógica de monetización directa y retorno rápido. Pilotea con métricas claras y escala si funciona.';}
+else if(v==='eficiencia'&&a==='interno'&&h==='corto'){action=r==='alto'?'Evaluar':'Mantener';ac=r==='alto'?'aev':'ahd';exp='Señal de eficiencia operativa (E). Apuesta sólida si libera tiempo sin comprometer calidad o confianza.';}
+else if((v==='calidad'||p==='engagement')&&a==='externo'&&h==='largo'){action='Escalar';ac='asc';exp='Apunta a mejorar experiencia y relación con la audiencia (Q). Retorno no inmediato, pero valor sostenido.';}
+else if(v==='innovacion'||p==='nuevo'){action=r==='alto'?'Evaluar':'Mantener';ac=r==='alto'?'aev':'ahd';exp='La innovación estratégica (O) no siempre se mide a corto plazo. Cuida alcance, foco y aprendizaje.';}
+else{action=r==='alto'?'Evaluar':'Mantener';ac=r==='alto'?'aev':'ahd';exp='Señales mixtas. Precisa el problema, la métrica principal y las condiciones de éxito antes de escalar.';}
+document.getElementById('sempty').style.display='none';const so=document.getElementById('sout');so.style.display='flex';document.getElementById('oroi').textContent=roi;document.getElementById('oquad').textContent=quad;const oa=document.getElementById('oact');oa.className='oiv '+ac;oa.textContent=action;document.getElementById('oexp').textContent=exp;}
+
+// ── RISK CHECKER ──
+function toggleRisk(el){el.classList.toggle('checked');}
+function evalRisk(){const items=document.querySelectorAll('.rcitem');const checked=[...items].filter(el=>el.classList.contains('checked')).length;const rr=document.getElementById('rrst');rr.style.display='block';rr.classList.add('show');let cls,msg;if(checked===0){cls='risk-low';msg='✓ Sin alertas activadas. Tu proyecto muestra un perfil de riesgo bajo. Puedes avanzar con confianza, pero recuerda que la ausencia de riesgos identificados no significa que no existan.'}else if(checked<=2){cls='risk-low';msg=`⚡ ${checked} alerta(s) activa(s). Nivel de riesgo bajo-medio. Documenta cómo vas a gestionar estas alertas antes de escalar el proyecto.`}else if(checked<=5){cls='risk-med';msg=`⚠ ${checked} alertas activas. Nivel de riesgo medio. Diseña salvaguardas específicas para cada alerta antes de implementar. Considera un piloto acotado con supervisión editorial reforzada.`}else{cls='risk-hi';msg=`🚨 ${checked} alertas activas. Nivel de riesgo alto. El proyecto necesita rediseño antes de avanzar. Prioriza gobernanza, transparencia y verificación humana. No escales hasta resolver las alertas críticas.`}rr.className='risk-result show '+cls;rr.textContent=msg;toast(checked>5?'🚨':checked>2?'⚠':'✓',`${checked} alertas · ${checked>5?'Riesgo alto':checked>2?'Riesgo medio':'Riesgo bajo'}`,'Resultado del checklist');}
+function clearRisk(){document.querySelectorAll('.rcitem').forEach(el=>el.classList.remove('checked'));const rr=document.getElementById('rrst');rr.style.display='none';rr.className='risk-result';}
+
+// ── GLOSSARY ──
+let gCurCat='todos';
+function filterG(){const q=document.getElementById('gsrch').value.toLowerCase();document.querySelectorAll('.gitem').forEach(item=>{const t=(item.dataset.term||'')+item.textContent.toLowerCase();const catOk=gCurCat==='todos'||item.dataset.cat===gCurCat;item.style.display=(t.includes(q)&&catOk)?'':'none'});}
+function filterCat(el){gCurCat=el.dataset.cat;document.querySelectorAll('.gfc').forEach(b=>b.classList.toggle('active',b===el));filterG();}
+
+// ── FICHA CHIPS ──
+document.querySelectorAll('.flc').forEach(c=>{c.addEventListener('click',function(){const g=this.dataset.g;document.querySelectorAll(`.flc[data-g="${g}"]`).forEach(x=>x.classList.remove('sel'));this.classList.add('sel')});});
+
+// ── GENERATE FICHA ──
+const fd={};
+function genFicha(){const nombre=document.getElementById('fn').value.trim();if(!nombre){toast('⚠','Falta el nombre','Completa el campo "Nombre del proyecto"');return}fd.nombre=nombre;fd.problema=document.getElementById('fp').value.trim()||'—';fd.medio=document.getElementById('fm').value.trim()||'—';fd.resp=document.getElementById('fr').value.trim()||'—';fd.metrica=document.getElementById('fmet').value.trim()||'—';fd.riesgos=document.getElementById('frisk').value.trim()||'—';const gc=g=>document.querySelector(`.flc[data-g="${g}"].sel`);fd.ed=gc('ed')?.dataset.v||'—';fd.neg=gc('neg')?.dataset.v||'—';fd.imp=gc('imp')?.dataset.v||'—';fd.hor=gc('hor')?.dataset.v||'—';fd.dec=gc('dec')?.dataset.v||'—';const quad=fd.imp!=='—'&&fd.hor!=='—'?qfrom(fd.imp,fd.hor):'—';document.getElementById('pvtit').textContent=fd.nombre;document.getElementById('pvmeta').textContent=`Análisis: ${new Date().toLocaleDateString('es',{year:'numeric',month:'long',day:'numeric'})}`;document.getElementById('pvm').textContent=fd.medio;document.getElementById('pvr').textContent=fd.resp;document.getElementById('pvq').textContent=quad;document.getElementById('pvv').innerHTML=`Editorial: <strong>${fd.ed}</strong> · Negocio: <strong>${fd.neg}</strong><br>Impacto: <strong>${fd.imp}</strong> · Horizonte: <strong>${fd.hor}</strong>`;document.getElementById('pvmet').textContent=fd.metrica;document.getElementById('pvp').textContent=fd.problema;document.getElementById('pvrisk').textContent=fd.riesgos;const dcl=document.getElementById('pvdec');dcl.textContent=fd.dec;const dm={Escalar:'pds',Mantener:'pdh',Evaluar:'pde',Eliminar:'pdd'};dcl.className='pvdec '+(dm[fd.dec]||'pdh');const pw=document.getElementById('pvwrap');pw.classList.add('show');pw.scrollIntoView({behavior:'smooth',block:'start'});toast('📄','¡Ficha generada!','Lista para presentar o imprimir');}
+function copyF(){const txt=`FICHA DE DECISIÓN — Decidir con IA (Gisella Salmón)\nEn base a Metodología E-Q-V-O de Pepe Cerezo\n\nProyecto: ${fd.nombre}\nMedio: ${fd.medio}\nResponsable: ${fd.resp}\nFecha: ${new Date().toLocaleDateString('es')}\n\nProblema: ${fd.problema}\nMétrica: ${fd.metrica}\nRiesgos: ${fd.riesgos}\n\nVariables:\n  Valor editorial: ${fd.ed} · Valor negocio: ${fd.neg}\n  Impacto: ${fd.imp} · Horizonte: ${fd.hor}\n\nDecisión: ${fd.dec}`;navigator.clipboard.writeText(txt).then(()=>toast('📋','Copiado','Texto listo para pegar')).catch(()=>toast('⚠','Error','No se pudo copiar'));}
+</script>
+</body>
+</html>
